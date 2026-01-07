@@ -1,4 +1,6 @@
 const Ticket = require("../models/Ticket");
+const { sendEscalationWebhook } = require("./webhookService");
+
 
 function startSLAMonitor() {
   setInterval(async () => {
@@ -13,9 +15,10 @@ function startSLAMonitor() {
 
     for (let ticket of overdueTickets) {
       ticket.escalated = true;
-      ticket.status = "In Progress";
       await ticket.save();
 
+      sendEscalationWebhook(ticket);
+      
       console.log(`🚨 SLA breached for ticket: ${ticket._id}`);
     }
   }, 60 * 1000); // check every 1 minute
