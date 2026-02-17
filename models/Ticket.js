@@ -18,6 +18,25 @@ const ticketSchema = new mongoose.Schema({
     enum: ["Open", "In Progress", "Resolved"],
     default: "Open"
   },
+  category: {
+    type: String,
+    enum: ["Software", "Hardware", "Network", "Database", "Infrastructure"],
+    default: "Software"
+  },
+  assignedTeam: {
+    type: String,
+    enum: ["DevOps", "DBA", "Support", "Infra", "Security"],
+    default: "Support"
+  },
+  assignedTo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User"
+  },
+  assignmentStatus: {
+    type: String,
+    enum: ["Unassigned", "Assigned"],
+    default: "Unassigned"
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -28,7 +47,10 @@ const ticketSchema = new mongoose.Schema({
 escalated: {
   type: Boolean,
   default: false
-}
+},
+resolvedAt: {
+    type: Date
+  }
 
 });
 

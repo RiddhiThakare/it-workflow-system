@@ -1,4 +1,5 @@
 const express = require("express");
+const User = require("../models/User");
 const router = express.Router();
 const Ticket = require("../models/Ticket");
 const { applyTicketBusinessRules } = require("../rules/ticketRules");
@@ -50,35 +51,45 @@ router.get("/", async (req, res) => {
 const { triggerCICDPipeline } = require("../services/cicdTrigger");
 
 router.put(
-  "/:id", 
+  "/:id/assign",
   authMiddleware,
-  authorizeRoles("Admin", "Agent"),
+  authorizeRoles("Admin"),
   async (req, res) => {
-  try {
-    const ticket = await Ticket.findById(req.params.id);
+    try {
+      const { agentId, team } = req.body;
 
-    if (!ticket) {
-      return res.status(404).json({ error: "Ticket not found" });
+      // Find ticket
+      const ticket = await Ticket.findById(req.params.id);
+
+      if (!ticket) {
+        return res.status(404).json({ error: "Ticket not found" });
+      }
+
+      // Validate agent
+      const agent = await User.findById(agentId);
+
+      if (!agent) {
+        return res.status(404).json({ error: "Agent not found" });
+      }
+
+      // Update assignment
+      ticket.assignedTo = agentId;
+      ticket.assignedTeam = team;
+      ticket.assignmentStatus = "Assigned";
+      ticket.status = "In Progress";
+
+      await ticket.save();
+
+      res.json({
+        message: "Ticket assigned successfully",
+        ticket
+      });
+
+    } catch (err) {
+      res.status(500).json({ error: err.message });
     }
-
-    const previousStatus = ticket.status;
-
-    if (req.body.status) {
-      ticket.status = req.body.status;
-    }
-
-    await ticket.save();
-
-    // BUSINESS RULE
-    if (previousStatus !== "In Progress" && ticket.status === "In Progress") {
-      triggerCICDPipeline(ticket);
-    }
-
-    res.json(ticket);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
   }
-});
+);
 
 
 module.exports = router;
