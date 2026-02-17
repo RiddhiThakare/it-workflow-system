@@ -1,8 +1,13 @@
+require("dotenv").config();
+
 const express = require("express");
 const mongoose = require("mongoose");
 
 const app = express();
 app.use(express.json());
+
+const authRoutes = require("./routes/auth");
+app.use("/auth", authRoutes);
 
 // Connect to MongoDB
 mongoose
@@ -14,6 +19,7 @@ mongoose
 const ticketRoutes = require("./routes/tickets");
 app.use("/tickets", ticketRoutes);
 
+//Sla Monitor
 const { startSLAMonitor } = require("./services/slaMonitor");
 startSLAMonitor();
 

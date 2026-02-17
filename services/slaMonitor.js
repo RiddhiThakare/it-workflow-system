@@ -19,7 +19,7 @@ function startSLAMonitor() {
 
       sendEscalationWebhook(ticket);
       
-      console.log(`🚨 SLA breached for ticket: ${ticket._id}`);
+      console.log(`SLA breached for ticket: ${ticket._id}`);
     }
   }, 60 * 1000); // check every 1 minute
 }

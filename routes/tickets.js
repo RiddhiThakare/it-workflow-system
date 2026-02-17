@@ -2,16 +2,23 @@ const express = require("express");
 const router = express.Router();
 const Ticket = require("../models/Ticket");
 const { applyTicketBusinessRules } = require("../rules/ticketRules");
+const authMiddleware = require("../middleware/authMiddleware");
+const authorizeRoles = require("../middleware/roleMiddleware");
+
 
 /**
  * POST /tickets
  * Create a new ticket
  */
-router.post("/", async (req, res) => {
+router.post(
+  "/",
+  authMiddleware,
+  authorizeRoles("Admin", "Agent", "User"),
+  async (req, res) => {
   try {
     let ticket = new Ticket(req.body);
 
-    // 🔥 Apply business rules BEFORE saving
+    // Applying business rules before saving
     ticket = applyTicketBusinessRules(ticket);
 
     await ticket.save();
@@ -20,6 +27,8 @@ router.post("/", async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
+
 
 /**
  * GET /tickets
@@ -40,7 +49,11 @@ router.get("/", async (req, res) => {
  */
 const { triggerCICDPipeline } = require("../services/cicdTrigger");
 
-router.put("/:id", async (req, res) => {
+router.put(
+  "/:id", 
+  authMiddleware,
+  authorizeRoles("Admin", "Agent"),
+  async (req, res) => {
   try {
     const ticket = await Ticket.findById(req.params.id);
 
@@ -56,7 +69,7 @@ router.put("/:id", async (req, res) => {
 
     await ticket.save();
 
-    //  PHASE 4 BUSINESS RULE
+    // BUSINESS RULE
     if (previousStatus !== "In Progress" && ticket.status === "In Progress") {
       triggerCICDPipeline(ticket);
     }
